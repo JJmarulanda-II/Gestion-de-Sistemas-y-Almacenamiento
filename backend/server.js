@@ -15,6 +15,16 @@ app.get('/', (req, res) => {
   res.json({ mensaje: '🐔 API de Pollo Fresh funcionando correctamente' });
 });
 
+// --- Rutas de prueba ---
+app.get('/', (req, res) => {
+  res.json({ mensaje: '🐔 API de Pollo Fresh funcionando correctamente' });
+});
+
+// --- RUTAS DE LA API ---
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes); 
+
+
 // --- Inicialización del Servidor ---
 const PORT = process.env.PORT || 3001;
 
