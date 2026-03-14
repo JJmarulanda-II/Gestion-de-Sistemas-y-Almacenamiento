@@ -1,9 +1,10 @@
 require('dotenv').config(); 
 const express = require('express');
 const cors = require('cors');
-const { connectDB } = require('./config/db'); 
+const { sequelize, connectDB } = require('./config/db'); 
 const app = express();
 
+const Producto = require('./models/Producto')
 
 app.use(cors());
 
@@ -21,4 +22,7 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, async () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   await connectDB();
+
+  await sequelize.sync({ alter: true });
+  console.log('📦 Modelos sincronizados con la base de datos.')
 });
