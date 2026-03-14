@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db'); // Importamos la conexión
+const { sequelize } = require('../config/db'); 
 
 const Producto = sequelize.define('Producto', {
   id: {

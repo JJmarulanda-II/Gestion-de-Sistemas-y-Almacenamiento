@@ -4,7 +4,7 @@ const cors = require('cors');
 const { sequelize, connectDB } = require('./config/db'); 
 const app = express();
 
-const Producto = require('./models/Producto')
+const { Producto, Entrada, Salida } = require('./models');
 
 app.use(cors());
 
