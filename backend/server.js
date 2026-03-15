@@ -22,6 +22,9 @@ app.get('/', (req, res) => {
 
 // --- RUTAS DE LA API ---
 const authRoutes = require('./routes/authRoutes');
+const productoRoutes = require('./routes/productoRoutes');
+
+app.use('/api/productos', productoRoutes);
 app.use('/api/auth', authRoutes); 
 
 
