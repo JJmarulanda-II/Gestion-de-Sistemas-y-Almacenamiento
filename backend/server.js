@@ -23,10 +23,11 @@ app.get('/', (req, res) => {
 // --- RUTAS DE LA API ---
 const authRoutes = require('./routes/authRoutes');
 const productoRoutes = require('./routes/productoRoutes');
+const entradaRoutes = require('./routes/entradaRoutes');
 
 app.use('/api/productos', productoRoutes);
 app.use('/api/auth', authRoutes); 
-
+app.use('/api/entradas', entradaRoutes);
 
 // --- Inicialización del Servidor ---
 const PORT = process.env.PORT || 3001;
