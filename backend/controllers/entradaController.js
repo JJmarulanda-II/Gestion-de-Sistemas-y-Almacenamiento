@@ -6,7 +6,6 @@ const registrarEntrada = async (req, res) => {
   const t = await sequelize.transaction();
 
   try {
-    // cantidad_kilos debe ser un número decimal (ej. 15.500)
     const { producto_id, cantidad_kilos, proveedor } = req.body;
     
     const usuario_id = req.usuario.id; 
