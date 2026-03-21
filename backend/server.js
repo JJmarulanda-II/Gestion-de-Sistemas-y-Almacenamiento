@@ -4,6 +4,7 @@ const cors = require('cors');
 const { sequelize, connectDB } = require('./config/db'); 
 const app = express();
 
+
 const { Producto, Entrada, Salida } = require('./models');
 
 app.use(cors());
@@ -24,10 +25,12 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const entradaRoutes = require('./routes/entradaRoutes');
+const salidaRoutes = require('./routes/salidaRoutes');
 
 app.use('/api/productos', productoRoutes);
 app.use('/api/auth', authRoutes); 
 app.use('/api/entradas', entradaRoutes);
+app.use('/api/salidas', salidaRoutes);
 
 // --- Inicialización del Servidor ---
 const PORT = process.env.PORT || 3001;
