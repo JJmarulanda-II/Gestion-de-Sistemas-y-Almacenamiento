@@ -1,19 +1,27 @@
-import { useState } from 'react'
-import './App.css'
+// frontend/src/App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900">
-      <div className="bg-white p-10 rounded-xl shadow-2xl text-center">
-        <h1 className="text-4xl font-extrabold text-blue-600 mb-4">
-          🐔 Pollo Fresh ERP
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Si ves esto, React y Tailwind v4 están funcionando perfectamente.
-        </p>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        {/* Rutas Públicas */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Rutas Protegidas (Envueltas por el portero) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          {/* Aquí irán las futuras rutas: /inventario, /ventas, etc. */}
+        </Route>
+
+        {/* Si escriben cualquier otra ruta que no existe o la raíz, al login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
