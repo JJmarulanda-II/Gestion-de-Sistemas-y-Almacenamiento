@@ -4,6 +4,7 @@ import InputField from '../components/InputField';
 import Button from '../components/Button';
 import logo from '../assets/logo.jpeg';
 import fondo from '../assets/fondo-repo.png';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export default function Login() {
   const [cargando, setCargando] = useState(false);
   
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +25,8 @@ export default function Login() {
     if (!resultado.success) {
       setError(resultado.mensaje);
       setCargando(false);
+    } else {
+      navigate('/dashboard');
     }
   };
 
