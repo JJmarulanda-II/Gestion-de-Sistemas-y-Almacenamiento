@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Productos from './pages/Productos';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         {/* Rutas Protegidas (Envueltas por el portero) */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/productos" element={<Productos />} />
           {/* Aquí irán las futuras rutas: /inventario, /ventas, etc. */}
         </Route>
 

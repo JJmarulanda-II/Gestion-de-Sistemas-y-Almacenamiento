@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
 
@@ -33,9 +34,26 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
             Bienvenido al Panel de Control
           </h2>
+          
           <p className="text-gray-600 max-w-2xl mx-auto">
             Desde aquí podrás gestionar todo el inventario de Pollo Fresh. Próximamente agregaremos los indicadores de stock, registro de entradas de mercancía y el panel de ventas.
           </p>
+        </div>
+        
+        {/* Menú de Accesos Rápidos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link to="/productos" className="bg-white p-6 rounded-xl shadow border-l-4 border-primary hover:shadow-lg transition flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-xl text-gray-800">Catálogo</h3>
+              <p className="text-gray-500 text-sm mt-1">Gestionar cortes y precios</p>
+            </div>
+            <span className="text-3xl">🍗</span>
+          </Link>
+          {/* Aquí irán los links a Entradas y Salidas en el futuro */}
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-8 text-center border-t-4 border-primary">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4"></h2>
         </div>
       </main>
     </div>
