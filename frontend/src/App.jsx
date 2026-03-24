@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Productos from './pages/Productos';
 import ProtectedRoute from './components/ProtectedRoute';
+import Entradas from './pages/Entradas'
 
 function App() {
   return (
@@ -15,7 +16,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/productos" element={<Productos />} />
-          {/* Aquí irán las futuras rutas: /inventario, /ventas, etc. */}
+          <Route path="/entradas" element={<Entradas />} />
         </Route>
 
         {/* Si escriben cualquier otra ruta que no existe o la raíz, al login */}

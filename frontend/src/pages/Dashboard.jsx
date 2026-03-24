@@ -49,12 +49,22 @@ export default function Dashboard() {
             </div>
             <span className="text-3xl">🍗</span>
           </Link>
-          {/* Aquí irán los links a Entradas y Salidas en el futuro */}
+
+          {/* Tarjeta 2: Entradas de Mercancía (NUEVA) */}
+          <Link to="/entradas" className="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500 hover:shadow-lg transition flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-xl text-gray-800">Recepción</h3>
+              <p className="text-gray-500 text-sm mt-1">Registrar llegada de pollo</p>
+            </div>
+            <span className="text-3xl">📦</span>
+          </Link>
         </div>
 
         <div className="bg-white rounded-xl shadow p-8 text-center border-t-4 border-primary">
           <h2 className="text-3xl font-bold text-gray-800 mb-4"></h2>
         </div>
+
+
       </main>
     </div>
   );
