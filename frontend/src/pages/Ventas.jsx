@@ -7,8 +7,16 @@ import Button from '../components/Button';
 
 // --- FUNCIONES DE FORMATEO ---
 const formatearKilos = (valor) => {
-  if (valor == null) return '0'; // Retorna solo el número, el "Kg" lo ponemos en el HTML
+  if (valor == null) return '0';
   return parseFloat(valor).toString(); 
+};
+
+// Sacamos la función de moneda afuera para poder usarla en el menú desplegable también
+const formatoMoneda = (valor) => {
+  const numero = Number(valor) || 0;
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: 'COP', minimumFractionDigits: 0
+  }).format(numero);
 };
 
 export default function Ventas() {
@@ -21,7 +29,6 @@ export default function Ventas() {
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
 
-  // Estados del formulario
   const [productoId, setProductoId] = useState('');
   const [cantidadKilos, setCantidadKilos] = useState('');
   const [totalEstimado, setTotalEstimado] = useState(0);
@@ -30,10 +37,12 @@ export default function Ventas() {
     cargarDatosIniciales();
   }, []);
 
-  // Efecto para calcular el total estimado cada vez que cambian los kilos o el producto
+  // --- FIX: EFECTO DE CÁLCULO EN TIEMPO REAL ---
   useEffect(() => {
     if (productoId && cantidadKilos) {
-      const productoSeleccionado = productosRaw.find(p => p.id.toString() === productoId.toString());
+      // Usamos '==' para que Javascript iguale Texto con Número sin fallar
+      const productoSeleccionado = productosRaw.find(p => p.id == productoId);
+      
       if (productoSeleccionado) {
         const calculo = parseFloat(cantidadKilos) * parseFloat(productoSeleccionado.precio_por_kilo);
         setTotalEstimado(calculo || 0);
@@ -52,17 +61,16 @@ export default function Ventas() {
       setVentas(ventasData);
       setProductosRaw(productosData);
       
-      // APLICANDO EL FORMATO AL STOCK EN EL SELECT
+      // APLICANDO EL FORMATO DE MONEDA CORRECTO AQUÍ
       const opciones = productosData.map(prod => ({
         value: prod.id,
-        label: `${prod.nombre} - $${parseFloat(prod.precio_por_kilo).toLocaleString('es-CO')} (Stock: ${formatearKilos(prod.stock_actual_kilos)} Kg)`
+        label: `${prod.nombre} - ${formatoMoneda(prod.precio_por_kilo)} (Stock: ${formatearKilos(prod.stock_actual_kilos)} Kg)`
       }));
       setOpcionesProductos(opciones);
       
       if (opciones.length > 0) {
         setProductoId(opciones[0].value);
       }
-      
     } catch (err) {
       console.error(err);
       setError('Error al cargar los datos del servidor.');
@@ -84,8 +92,6 @@ export default function Ventas() {
       });
       
       setExito('Venta registrada exitosamente. Stock descontado.');
-      
-      // Limpiamos el formulario (solo cantidad para agilizar ventas del mismo producto)
       setCantidadKilos('');
       
       await cargarDatosIniciales();
@@ -95,12 +101,6 @@ export default function Ventas() {
       setCargandoForm(false);
       setTimeout(() => setExito(''), 4000);
     }
-  };
-
-  const formatoMoneda = (valor) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency', currency: 'COP', minimumFractionDigits: 0
-    }).format(valor);
   };
 
   return (
@@ -114,7 +114,6 @@ export default function Ventas() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Formulario de Venta */}
         <div className="bg-white p-6 rounded-xl shadow-md h-fit border-t-4 border-green-500">
           <h3 className="text-xl font-bold mb-4 text-gray-700">Nueva Venta</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -125,7 +124,6 @@ export default function Ventas() {
               onChange={(e) => setProductoId(e.target.value)}
               required
             />
-            {/* Input para la cantidad, permitiendo decimales con step="any" */}
             <InputField 
               label="Cantidad (Kilos)" 
               type="number"
@@ -136,7 +134,6 @@ export default function Ventas() {
               required 
             />
             
-            {/* Panel de Cobro Dinámico */}
             <div className="mt-4 p-4 bg-gray-100 rounded-lg text-center border border-gray-200">
               <p className="text-sm text-gray-500 font-medium mb-1">Total a Cobrar:</p>
               <p className="text-3xl font-black text-green-600">
@@ -152,7 +149,6 @@ export default function Ventas() {
           </form>
         </div>
 
-        {/* Tabla de Historial de Ventas */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md overflow-x-auto">
           <h3 className="text-xl font-bold mb-4 text-gray-700">Historial de Salidas</h3>
           
@@ -186,7 +182,6 @@ export default function Ventas() {
                       </td>
                       <td className="p-3 font-medium text-gray-800">{venta.Producto?.nombre}</td>
                       
-                      {/* APLICANDO EL FORMATO A LOS KILOS DE LA TABLA */}
                       <td className="p-3 text-red-500 font-bold">-{formatearKilos(venta.cantidad_kilos)} Kg</td>
                       
                       <td className="p-3 text-green-700 font-black">{formatoMoneda(venta.total_venta)}</td>

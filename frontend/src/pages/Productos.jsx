@@ -3,6 +3,12 @@ import { obtenerProductos, crearProducto, eliminarProducto } from '../services/p
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 
+// --- FUNCIONES DE FORMATEO ---
+const formatearKilos = (valor) => {
+  if (valor == null) return '0';
+  return parseFloat(valor).toString();
+};
+
 export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -131,48 +137,49 @@ export default function Productos() {
             <p className="text-gray-500">Cargando catálogo...</p>
           ) : (
            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-gray-600 text-sm uppercase">
-                  <th className="p-3 rounded-tl-lg">Producto</th>
-                  <th className="p-3">Precio / Kg</th>
-                  <th className="p-3">Stock Actual</th>
-                  <th className="p-3 rounded-tr-lg text-center">Acciones</th> {/* <-- Nueva columna */}
-                </tr>
-              </thead>
-              <tbody>
-                {productos.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="p-4 text-center text-gray-500">
-                      No hay productos registrados o activos aún.
-                    </td>
-                  </tr>
-                ) : (
-                  productos.map((prod) => (
-                    <tr key={prod.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                      <td className="p-3 font-medium text-gray-800">{prod.nombre}</td>
-                      <td className="p-3 text-green-700 font-bold">{formatoMoneda(prod.precio_por_kilo)}</td>
-                      <td className="p-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          prod.stock_actual_kilos > 5 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {prod.stock_actual_kilos} Kg
-                        </span>
-                      </td>
-                      {/* Botón de Eliminar */}
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => handleEliminar(prod.id, prod.nombre)}
-                          className="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1 rounded text-sm font-bold transition-colors"
-                          title="Desactivar producto"
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+             <thead>
+               <tr className="bg-gray-100 text-gray-600 text-sm uppercase">
+                 <th className="p-3 rounded-tl-lg">Producto</th>
+                 <th className="p-3">Precio / Kg</th>
+                 <th className="p-3">Stock Actual</th>
+                 <th className="p-3 rounded-tr-lg text-center">Acciones</th>
+               </tr>
+             </thead>
+             <tbody>
+               {productos.length === 0 ? (
+                 <tr>
+                   <td colSpan="4" className="p-4 text-center text-gray-500">
+                     No hay productos registrados o activos aún.
+                   </td>
+                 </tr>
+               ) : (
+                 productos.map((prod) => (
+                   <tr key={prod.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                     <td className="p-3 font-medium text-gray-800">{prod.nombre}</td>
+                     <td className="p-3 text-green-700 font-bold">{formatoMoneda(prod.precio_por_kilo)}</td>
+                     <td className="p-3">
+                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                         parseFloat(prod.stock_actual_kilos) > 5 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                       }`}>
+                         {/* APLICANDO EL FORMATO DE KILOS AQUÍ */}
+                         {formatearKilos(prod.stock_actual_kilos)} Kg
+                       </span>
+                     </td>
+                     {/* Botón de Eliminar */}
+                     <td className="p-3 text-center">
+                       <button
+                         onClick={() => handleEliminar(prod.id, prod.nombre)}
+                         className="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1 rounded text-sm font-bold transition-colors"
+                         title="Desactivar producto"
+                       >
+                         Eliminar
+                       </button>
+                     </td>
+                   </tr>
+                 ))
+               )}
+             </tbody>
+           </table>
           )}
         </div>
       </div>

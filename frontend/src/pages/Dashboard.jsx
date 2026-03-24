@@ -4,6 +4,12 @@ import { Link } from 'react-router-dom';
 import { obtenerProductos } from '../services/productoService';
 import { obtenerSalidas } from '../services/salidaService';
 
+// --- FUNCIONES DE FORMATEO ---
+const formatearKilos = (valor) => {
+  if (valor == null) return '0';
+  return parseFloat(valor).toString();
+};
+
 export default function Dashboard() {
   const { usuario, logout } = useContext(AuthContext);
   
@@ -21,23 +27,19 @@ export default function Dashboard() {
 
   const cargarAnaliticas = async () => {
     try {
-      // Traemos todos los datos al mismo tiempo
       const [productosData, ventasData] = await Promise.all([
         obtenerProductos(),
         obtenerSalidas()
       ]);
 
-      // 1. Calcular Ingresos Totales
       const ingresos = ventasData.reduce((acumulador, venta) => {
         return acumulador + parseFloat(venta.total_venta);
       }, 0);
 
-      // 2. Calcular Stock Total
       const kilos = productosData.reduce((acumulador, prod) => {
         return acumulador + parseFloat(prod.stock_actual_kilos);
       }, 0);
 
-      // 3. Filtrar Productos con Bajo Stock (Menos de 5 Kg)
       const alertas = productosData.filter(prod => parseFloat(prod.stock_actual_kilos) < 5);
 
       setMetricas({
@@ -60,7 +62,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Navbar Superior */}
       <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-extrabold text-primary">
           🐔 Pollo Fresh ERP
@@ -79,13 +80,10 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Área de Trabajo Principal */}
       <main className="p-6 flex-grow max-w-7xl mx-auto w-full">
         
-        {/* --- SECCIÓN DE ANALÍTICAS (KPIs) --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
-          {/* Tarjeta de Ingresos */}
           <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500">
             <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-2">Ingresos Totales</h3>
             {cargando ? (
@@ -95,17 +93,15 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Tarjeta de Stock */}
           <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
             <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-2">Inventario Global</h3>
             {cargando ? (
               <div className="h-8 bg-gray-200 rounded animate-pulse w-1/2"></div>
             ) : (
-              <p className="text-3xl font-black text-blue-600">{metricas.totalKilos.toFixed(2)} Kg</p>
+              <p className="text-3xl font-black text-blue-600">{formatearKilos(metricas.totalKilos.toFixed(2))} Kg</p>
             )}
           </div>
 
-          {/* Tarjeta de Alertas */}
           <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-500">
             <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-2">Alertas de Stock</h3>
             {cargando ? (
@@ -118,7 +114,7 @@ export default function Dashboard() {
                     {metricas.productosBajoStock.map(prod => (
                       <li key={prod.id} className="flex justify-between border-b py-1">
                         <span>{prod.nombre}</span>
-                        <span className="font-bold text-red-500">{prod.stock_actual_kilos} Kg</span>
+                        <span className="font-bold text-red-500">{formatearKilos(prod.stock_actual_kilos)} Kg</span>
                       </li>
                     ))}
                   </ul>
@@ -130,7 +126,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* --- SECCIÓN DE ACCESOS RÁPIDOS --- */}
         <h2 className="text-xl font-bold text-gray-800 mb-4 border-l-4 border-primary pl-3">Módulos del Sistema</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Link to="/productos" className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center justify-between group">
