@@ -33,7 +33,7 @@ export default function Ventas() {
   // Efecto para calcular el total estimado cada vez que cambian los kilos o el producto
   useEffect(() => {
     if (productoId && cantidadKilos) {
-      const productoSeleccionado = productosRaw.find(p => p.id.toString() === productoId);
+      const productoSeleccionado = productosRaw.find(p => p.id.toString() === productoId.toString());
       if (productoSeleccionado) {
         const calculo = parseFloat(cantidadKilos) * parseFloat(productoSeleccionado.precio_por_kilo);
         setTotalEstimado(calculo || 0);
