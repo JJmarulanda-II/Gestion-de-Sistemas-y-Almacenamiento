@@ -5,6 +5,12 @@ import InputField from '../components/InputField';
 import SelectField from '../components/SelectField';
 import Button from '../components/Button';
 
+// --- FUNCIONES DE FORMATEO ---
+const formatearKilos = (valor) => {
+  if (valor == null) return '0'; // Retorna solo el número, el "Kg" lo ponemos en el HTML
+  return parseFloat(valor).toString(); 
+};
+
 export default function Ventas() {
   const [ventas, setVentas] = useState([]);
   const [productosRaw, setProductosRaw] = useState([]);
@@ -46,11 +52,16 @@ export default function Ventas() {
       setVentas(ventasData);
       setProductosRaw(productosData);
       
+      // APLICANDO EL FORMATO AL STOCK EN EL SELECT
       const opciones = productosData.map(prod => ({
         value: prod.id,
-        label: `${prod.nombre} - $${parseFloat(prod.precio_por_kilo).toLocaleString('es-CO')} (Stock: ${prod.stock_actual_kilos} Kg)`
+        label: `${prod.nombre} - $${parseFloat(prod.precio_por_kilo).toLocaleString('es-CO')} (Stock: ${formatearKilos(prod.stock_actual_kilos)} Kg)`
       }));
       setOpcionesProductos(opciones);
+      
+      if (opciones.length > 0) {
+        setProductoId(opciones[0].value);
+      }
       
     } catch (err) {
       console.error(err);
@@ -74,8 +85,7 @@ export default function Ventas() {
       
       setExito('Venta registrada exitosamente. Stock descontado.');
       
-      // Limpiamos el formulario
-      setProductoId('');
+      // Limpiamos el formulario (solo cantidad para agilizar ventas del mismo producto)
       setCantidadKilos('');
       
       await cargarDatosIniciales();
@@ -115,10 +125,12 @@ export default function Ventas() {
               onChange={(e) => setProductoId(e.target.value)}
               required
             />
+            {/* Input para la cantidad, permitiendo decimales con step="any" */}
             <InputField 
               label="Cantidad (Kilos)" 
               type="number"
-              placeholder="Ej: 2.500" 
+              step="any"
+              placeholder="Ej: 2.5" 
               value={cantidadKilos} 
               onChange={(e) => setCantidadKilos(e.target.value)} 
               required 
@@ -173,7 +185,10 @@ export default function Ventas() {
                         })}
                       </td>
                       <td className="p-3 font-medium text-gray-800">{venta.Producto?.nombre}</td>
-                      <td className="p-3 text-red-500 font-bold">-{venta.cantidad_kilos} Kg</td>
+                      
+                      {/* APLICANDO EL FORMATO A LOS KILOS DE LA TABLA */}
+                      <td className="p-3 text-red-500 font-bold">-{formatearKilos(venta.cantidad_kilos)} Kg</td>
+                      
                       <td className="p-3 text-green-700 font-black">{formatoMoneda(venta.total_venta)}</td>
                       <td className="p-3 text-sm text-gray-500">{venta.Usuario?.nombre}</td>
                     </tr>

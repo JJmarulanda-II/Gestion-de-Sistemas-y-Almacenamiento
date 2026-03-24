@@ -5,6 +5,13 @@ import InputField from '../components/InputField';
 import SelectField from '../components/SelectField';
 import Button from '../components/Button';
 
+// --- FUNCIONES DE FORMATEO (Solo visuales) ---
+const formatearKilos = (valor) => {
+  if (valor == null) return '0 Kg';
+  // parseFloat quita los ceros decimales inútiles automáticamente
+  return parseFloat(valor).toString() + ' Kg'; 
+};
+
 export default function Entradas() {
   const [entradas, setEntradas] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -30,12 +37,18 @@ export default function Entradas() {
       ]);
       setEntradas(entradasData);
       
-
+      // APLICANDO EL FORMATO EN EL MENÚ DESPLEGABLE
       const opcionesProductos = productosData.map(prod => ({
         value: prod.id,
-        label: `${prod.nombre} (Stock actual: ${prod.stock_actual_kilos} Kg)`
+        label: `${prod.nombre} (Stock actual: ${formatearKilos(prod.stock_actual_kilos)})` 
       }));
+      
       setProductos(opcionesProductos);
+      
+      // Validacion para que el Select no envíe un ID vacío
+      if (opcionesProductos.length > 0) {
+        setProductoId(opcionesProductos[0].value);
+      }
       
     } catch (err) {
       console.error(err);
@@ -60,8 +73,7 @@ export default function Entradas() {
       
       setExito('Mercancía registrada y stock actualizado correctamente.');
       
-
-      setProductoId('');
+      // No reseteamos el productoId para que no vuelva al estado vacío
       setCantidadKilos('');
       setProveedor('');
     
@@ -96,10 +108,12 @@ export default function Entradas() {
               onChange={(e) => setProductoId(e.target.value)}
               required
             />
+            {/* OJO: El Input de cantidad NO se formatea aquí, para dejar al usuario escribir limpio */}
             <InputField 
               label="Cantidad (Kilos)" 
               type="number"
-              placeholder="Ej: 15.500" 
+              step="any" // Importante para permitir decimales en HTML5
+              placeholder="Ej: 15.5" 
               value={cantidadKilos} 
               onChange={(e) => setCantidadKilos(e.target.value)} 
               required 
@@ -151,7 +165,12 @@ export default function Entradas() {
                         })}
                       </td>
                       <td className="p-3 font-medium text-gray-800">{ent.Producto?.nombre}</td>
-                      <td className="p-3 text-blue-600 font-bold">+{ent.cantidad_kilos} Kg</td>
+                      
+                      {/* APLICANDO EL FORMATO EN LA TABLA */}
+                      <td className="p-3 text-blue-600 font-bold">
+                        +{formatearKilos(ent.cantidad_kilos)}
+                      </td>
+                      
                       <td className="p-3 text-gray-600">{ent.proveedor || 'N/A'}</td>
                       <td className="p-3 text-sm text-gray-500">{ent.Usuario?.nombre}</td>
                     </tr>
