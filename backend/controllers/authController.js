@@ -69,7 +69,23 @@ const login = async (req, res) => {
   }
 };
 
+// Función para obtener todos los usuarios (Solo ADMIN)
+const obtenerUsuarios = async (req, res) => {
+  try {
+  
+    const usuarios = await Usuario.findAll({
+      attributes: ['id', 'nombre', 'email', 'rol', 'estado', 'createdAt'],
+      order: [['createdAt', 'DESC']]
+    });
+    res.status(200).json(usuarios);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener la lista de usuarios.' });
+  }
+};
+
 module.exports = {
   registrarUsuario,
-  login
+  login,
+  obtenerUsuarios
 };

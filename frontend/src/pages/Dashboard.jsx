@@ -153,6 +153,18 @@ export default function Dashboard() {
           </Link>
         </div>
 
+        {/* Tarjeta 4: Usuarios (Solo visible para ADMIN) */}
+          {usuario?.rol === 'ADMIN' && (
+            <Link to="/usuarios" className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center justify-between group">
+              <div>
+                <h3 className="font-bold text-xl text-gray-800 group-hover:text-purple-500 transition-colors">Personal</h3>
+                <p className="text-gray-500 text-sm mt-1">Gestión de empleados y roles</p>
+              </div>
+              <span className="text-4xl transition-transform group-hover:scale-110">👥</span>
+            </Link>
+          )}
+
+
       </main>
     </div>
   );

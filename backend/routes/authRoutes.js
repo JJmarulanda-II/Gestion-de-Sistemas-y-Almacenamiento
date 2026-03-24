@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { verificarToken, esAdmin } = require('../middleware/authMiddleware');
 
-// Ruta para registrar un usuario: POST http://localhost:3306/api/auth/registrar
-router.post('/registrar', authController.registrarUsuario);
-
-// Ruta para iniciar sesión: POST http://localhost:3306/api/auth/login
+// --- RUTA PÚBLICA ---
+// Cualquier persona (con credenciales) puede iniciar sesión
 router.post('/login', authController.login);
+
+// --- RUTAS PROTEGIDAS (SOLO ADMINISTRADOR) ---
+// Registrar un nuevo empleado
+router.post('/registrar', verificarToken, esAdmin, authController.registrarUsuario);
+
+// Obtener la lista de todos los empleados
+router.get('/usuarios', verificarToken, esAdmin, authController.obtenerUsuarios);
 
 module.exports = router;
