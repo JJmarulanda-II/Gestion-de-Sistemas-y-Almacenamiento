@@ -3,7 +3,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Productos from './pages/Productos';
 import ProtectedRoute from './components/ProtectedRoute';
-import Entradas from './pages/Entradas'
+import Entradas from './pages/Entradas';
+import Ventas from './pages/Ventas';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/productos" element={<Productos />} />
           <Route path="/entradas" element={<Entradas />} />
+          <Route path="/ventas" element={<Ventas />} />
         </Route>
 
         {/* Si escriben cualquier otra ruta que no existe o la raíz, al login */}

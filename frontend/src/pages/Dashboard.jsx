@@ -60,6 +60,15 @@ export default function Dashboard() {
           </Link>
         </div>
 
+        {/* Tarjeta 3: Ventas (NUEVA) */}
+          <Link to="/ventas" className="bg-white p-6 rounded-xl shadow border-l-4 border-green-500 hover:shadow-lg transition flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-xl text-gray-800">Ventas</h3>
+              <p className="text-gray-500 text-sm mt-1">Registrar salida y facturación</p>
+            </div>
+            <span className="text-3xl">💰</span>
+          </Link>
+
         <div className="bg-white rounded-xl shadow p-8 text-center border-t-4 border-primary">
           <h2 className="text-3xl font-bold text-gray-800 mb-4"></h2>
         </div>
