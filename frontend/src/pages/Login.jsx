@@ -48,7 +48,7 @@ export default function Login() {
         </div>
 
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
-          Acceso al Sistema ERP
+          Acceso al Sistema
         </h2>
 
         {error && (
