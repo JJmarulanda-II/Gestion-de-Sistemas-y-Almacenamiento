@@ -11,3 +11,8 @@ export const crearProducto = async (productoData) => {
   const response = await api.post('/productos', productoData);
   return response.data;
 };
+
+export const eliminarProducto = async (id) => {
+  const response = await api.delete(`/productos/${id}`);
+  return response.data;
+};
