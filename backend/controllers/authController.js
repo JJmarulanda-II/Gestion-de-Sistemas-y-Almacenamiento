@@ -84,8 +84,36 @@ const obtenerUsuarios = async (req, res) => {
   }
 };
 
+// Función para Activar/Desactivar un usuario (Solo ADMIN)
+const cambiarEstadoUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuario = await Usuario.findByPk(id);
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    // Regla de oro: Un Admin no puede desactivarse a sí mismo
+    if (usuario.id === req.usuario.id) {
+      return res.status(400).json({ mensaje: 'No puedes desactivar tu propia cuenta activa.' });
+    }
+
+    // Invertimos el estado actual (Si es true pasa a false, y viceversa)
+    await usuario.update({ estado: !usuario.estado });
+
+    res.status(200).json({ 
+      mensaje: `El acceso del usuario ha sido ${usuario.estado ? 'restaurado' : 'revocado'}.` 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar el estado del usuario.' });
+  }
+};
+
 module.exports = {
   registrarUsuario,
   login,
-  obtenerUsuarios
+  obtenerUsuarios,
+  cambiarEstadoUsuario
 };

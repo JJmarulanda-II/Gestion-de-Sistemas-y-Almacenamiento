@@ -1,6 +1,6 @@
 // frontend/src/pages/Usuarios.jsx
 import { useState, useEffect } from 'react';
-import { obtenerUsuarios, registrarUsuario } from '../services/usuarioService';
+import { obtenerUsuarios, registrarUsuario, cambiarEstadoUsuario } from '../services/usuarioService';
 import InputField from '../components/InputField';
 import SelectField from '../components/SelectField';
 import Button from '../components/Button';
@@ -62,6 +62,19 @@ export default function Usuarios() {
     } finally {
       setCargandoForm(false);
       setTimeout(() => setExito(''), 4000);
+    }
+  };
+  const handleEstado = async (id, nombre, estadoActual) => {
+    const accion = estadoActual ? 'desactivar' : 'reactivar';
+    const confirmar = window.confirm(`¿Estás seguro de que deseas ${accion} el acceso de "${nombre}"?`);
+    
+    if (confirmar) {
+      try {
+        await cambiarEstadoUsuario(id);
+        await cargarDatos(); // Recargamos la tabla para ver el cambio
+      } catch (err) {
+        setError(err.response?.data?.mensaje || 'Error al cambiar el estado.');
+      }
     }
   };
 
@@ -158,6 +171,52 @@ export default function Usuarios() {
               </tbody>
             </table>
           )}
+          <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 text-sm uppercase">
+                  <th className="p-3 rounded-tl-lg">Nombre</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Rol</th>
+                  <th className="p-3">Estado</th>
+                  <th className="p-3 rounded-tr-lg text-center">Acciones</th> {/* <-- Nueva columna */}
+                </tr>
+              </thead>
+              <tbody>
+                {usuarios.map((user) => (
+                  <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <td className="p-3 font-medium text-gray-800">{user.nombre}</td>
+                    <td className="p-3 text-sm text-gray-600">{user.email}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        user.rol === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-200 text-gray-800'
+                      }`}>
+                        {user.rol}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        user.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {user.estado ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    {/* Nueva celda con el botón */}
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => handleEstado(user.id, user.nombre, user.estado)}
+                        className={`px-3 py-1 rounded text-sm font-bold transition-colors ${
+                          user.estado 
+                            ? 'bg-red-100 text-red-600 hover:bg-red-600 hover:text-white' 
+                            : 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white'
+                        }`}
+                      >
+                        {user.estado ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
         </div>
       </div>
     </div>
