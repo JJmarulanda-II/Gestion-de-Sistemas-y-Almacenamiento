@@ -1,242 +1,251 @@
 import { useState, useEffect } from 'react';
-import { obtenerSalidas, registrarSalida } from '../services/salidaService';
+import { registrarSalida } from '../services/salidaService';
 import { obtenerProductos } from '../services/productoService';
-import InputField from '../components/InputField';
-import SelectField from '../components/SelectField';
 import Button from '../components/Button';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-// --- FUNCIONES DE FORMATEO ---
-const formatearKilos = (valor) => {
-  if (valor == null) return '0';
-  return parseFloat(valor).toString(); 
-};
 
 export default function Ventas() {
-  const [ventas, setVentas] = useState([]);
-  const [productosRaw, setProductosRaw] = useState([]);
-  const [opcionesProductos, setOpcionesProductos] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [carrito, setCarrito] = useState([]);
+  const [pagoCliente, setPagoCliente] = useState('');
   
   const [cargando, setCargando] = useState(true);
-  const [cargandoForm, setCargandoForm] = useState(false);
+  const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
 
-  const [productoId, setProductoId] = useState('');
-  const [cantidadKilos, setCantidadKilos] = useState('');
-  const [totalEstimado, setTotalEstimado] = useState(0);
-
+  // Cargar catálogo al iniciar
   useEffect(() => {
-    cargarDatosIniciales();
+    cargarCatalogo();
   }, []);
 
-  useEffect(() => {
-    if (productoId && cantidadKilos) {
-      // Usamos '==' para evitar errores de tipo al multiplicar
-      const productoSeleccionado = productosRaw.find(p => p.id == productoId);
-      if (productoSeleccionado) {
-        const calculo = parseFloat(cantidadKilos) * parseFloat(productoSeleccionado.precio_por_kilo);
-        setTotalEstimado(calculo || 0);
-      }
-    } else {
-      setTotalEstimado(0);
-    }
-  }, [productoId, cantidadKilos, productosRaw]);
-
-  const cargarDatosIniciales = async () => {
+  const cargarCatalogo = async () => {
     try {
-      const [ventasData, productosData] = await Promise.all([
-        obtenerSalidas(),
-        obtenerProductos()
-      ]);
-      setVentas(ventasData);
-      setProductosRaw(productosData);
-      
-      const opciones = productosData.map(prod => ({
-        value: prod.id,
-        // RESTAURADO: formatearKilos en el stock del desplegable
-        label: `${prod.nombre} - ${formatoMoneda(prod.precio_por_kilo)} (Stock: ${formatearKilos(prod.stock_actual_kilos)} Kg)`
-      }));
-      setOpcionesProductos(opciones);
-      
-      if (opciones.length > 0) {
-        setProductoId(opciones[0].value);
-      }
+      const data = await obtenerProductos();
+      setProductos(data);
     } catch (err) {
+      setError('Error al cargar el catálogo.');
       console.error(err);
-      setError('Error al cargar los datos del servidor.');
     } finally {
       setCargando(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // --- LÓGICA DEL CARRITO ---
+  const agregarAlCarrito = (producto) => {
+    // Verificamos si ya está en el carrito
+    const existe = carrito.find(item => item.id === producto.id);
+    if (existe) return; // Si ya está, no lo duplicamos
+
+    setCarrito([...carrito, { 
+      ...producto, 
+      cantidad_kilos: '', 
+      subtotal: 0 
+    }]);
+  };
+
+  const actualizarCantidad = (id, kilos) => {
+    const nuevoCarrito = carrito.map(item => {
+      if (item.id === id) {
+        const peso = parseFloat(kilos) || 0;
+        return { 
+          ...item, 
+          cantidad_kilos: kilos, 
+          subtotal: peso * parseFloat(item.precio_por_kilo) 
+        };
+      }
+      return item;
+    });
+    setCarrito(nuevoCarrito);
+  };
+
+  const eliminarDelCarrito = (id) => {
+    setCarrito(carrito.filter(item => item.id !== id));
+  };
+
+  // --- CÁLCULOS MATEMÁTICOS ---
+  const totalFactura = carrito.reduce((acc, item) => acc + item.subtotal, 0);
+  const cambio = parseFloat(pagoCliente) - totalFactura;
+
+  const formatoMoneda = (valor) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency', currency: 'COP', minimumFractionDigits: 0
+    }).format(valor || 0);
+  };
+
+  // --- FINALIZAR VENTA ---
+  const handleFinalizarVenta = async () => {
+    if (carrito.length === 0) {
+      setError('El carrito está vacío.');
+      return;
+    }
+
+    // Validar que todos los items tengan peso mayor a 0
+    const invalido = carrito.some(item => parseFloat(item.cantidad_kilos) <= 0 || !item.cantidad_kilos);
+    if (invalido) {
+      setError('Asegúrate de ingresar el peso correcto para todos los productos.');
+      return;
+    }
+
+    if (cambio < 0) {
+      setError('El pago del cliente es insuficiente.');
+      return;
+    }
+
     setError('');
     setExito('');
-    setCargandoForm(true);
+    setProcesando(true);
 
     try {
-      await registrarSalida({
-        producto_id: productoId,
-        cantidad_kilos: cantidadKilos
-      });
+      // Disparamos todas las peticiones al backend en paralelo
+      const promesasVentas = carrito.map(item => 
+        registrarSalida({
+          producto_id: item.id,
+          cantidad_kilos: item.cantidad_kilos
+        })
+      );
+
+      await Promise.all(promesasVentas);
       
-      setExito('Venta registrada exitosamente. Stock descontado.');
-      setCantidadKilos('');
-      await cargarDatosIniciales();
+      setExito('Venta registrada y stock descontado con éxito.');
+      setCarrito([]);
+      setPagoCliente('');
+      await cargarCatalogo(); // Actualizamos el stock en los botones
     } catch (err) {
-      setError(err.response?.data?.mensaje || 'Error al registrar la venta.');
+      setError(err.response?.data?.mensaje || 'Error al procesar la venta. Verifica el stock.');
     } finally {
-      setCargandoForm(false);
+      setProcesando(false);
       setTimeout(() => setExito(''), 4000);
     }
   };
 
-  const formatoMoneda = (valor) => {
-    const numero = Number(valor) || 0;
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency', currency: 'COP', minimumFractionDigits: 0
-    }).format(numero);
-  };
-
-  // --- FUNCIÓN SENIOR PARA EXPORTAR A PDF ---
-  const exportarPDF = () => {
-    if (ventas.length === 0) {
-      alert("No hay ventas para exportar.");
-      return;
-    }
-
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text("Reporte de Ventas - Pollo Fresh ERP", 14, 20);
-    
-    doc.setFontSize(11);
-    doc.text(`Generado el: ${new Date().toLocaleDateString('es-CO')} a las ${new Date().toLocaleTimeString('es-CO')}`, 14, 28);
-
-    const columnas = ["Fecha", "Producto", "Kilos Vendidos", "Total Cobrado", "Vendedor"];
-    const filas = ventas.map(venta => [
-      new Date(venta.fecha_venta).toLocaleDateString('es-CO'),
-      venta.Producto?.nombre,
-      // APLICADO: formatearKilos en el PDF
-      `${formatearKilos(venta.cantidad_kilos)} Kg`,
-      formatoMoneda(venta.total_venta),
-      venta.Usuario?.nombre
-    ]);
-
-    autoTable(doc, {
-      head: [columnas],
-      body: filas,
-      startY: 35, 
-      theme: 'grid',
-      headStyles: { fillColor: [234, 179, 8] }, 
-    });
-
-    doc.save(`Reporte_Ventas_${new Date().getTime()}.pdf`);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 border-l-4 border-green-500 pl-4">
-        Registro de Ventas
-      </h2>
-
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>}
-      {exito && <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm font-bold">{exito}</div>}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Formulario de Venta */}
-        <div className="bg-white p-6 rounded-xl shadow-md h-fit border-t-4 border-green-500">
-          <h3 className="text-xl font-bold mb-4 text-gray-700">Nueva Venta</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <SelectField 
-              label="Producto a Vender"
-              options={opcionesProductos}
-              value={productoId}
-              onChange={(e) => setProductoId(e.target.value)}
-              required
-            />
-            {/* RESTAURADO: step="any" para soportar decimales */}
-            <InputField 
-              label="Cantidad (Kilos)" 
-              type="number"
-              step="any"
-              placeholder="Ej: 2.5" 
-              value={cantidadKilos} 
-              onChange={(e) => setCantidadKilos(e.target.value)} 
-              required 
-            />
-            <div className="mt-4 p-4 bg-gray-100 rounded-lg text-center border border-gray-200">
-              <p className="text-sm text-gray-500 font-medium mb-1">Total a Cobrar:</p>
-              <p className="text-3xl font-black text-green-600">
-                {formatoMoneda(totalEstimado)}
-              </p>
-            </div>
-            <div className="pt-2">
-              {/* Noté que cambiaste los estilos del botón, pero lo dejamos como estaba en tu código base
-                  Si tenías clases específicas para el amarillo, asegúrate de mantenerlas en tu componente Button */}
-              <Button type="submit" cargando={cargandoForm}>
-                Confirmar Venta
-              </Button>
-            </div>
-          </form>
+    <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
+      
+      {/* PANEL IZQUIERDO: Catálogo POS (70%) */}
+      <div className="lg:w-2/3 p-6 overflow-y-auto h-screen">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 border-l-4 border-primary pl-4">
+            Punto de Venta (POS)
+          </h2>
         </div>
 
-        {/* Tabla de Historial de Ventas */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-          {/* Encabezado con Botón de Exportar */}
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-700">Historial de Salidas</h3>
-            <button 
-              onClick={exportarPDF}
-              className="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow flex items-center gap-2"
-            >
-              <span>📄</span> Exportar a PDF
-            </button>
+        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm font-bold">{error}</div>}
+        {exito && <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm font-bold">{exito}</div>}
+
+        {cargando ? (
+          <p className="text-gray-500">Cargando catálogo...</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {productos.map(prod => (
+              <button
+                key={prod.id}
+                onClick={() => agregarAlCarrito(prod)}
+                disabled={prod.stock_actual_kilos <= 0}
+                className={`p-4 rounded-xl shadow border-2 transition-all flex flex-col items-center justify-center h-32 text-center group ${
+                  prod.stock_actual_kilos <= 0 
+                    ? 'bg-gray-200 border-gray-300 opacity-60 cursor-not-allowed' 
+                    : 'bg-white border-transparent hover:border-primary hover:shadow-lg active:scale-95'
+                }`}
+              >
+                <h3 className="font-bold text-gray-800 text-lg group-hover:text-primary transition-colors">
+                  {prod.nombre}
+                </h3>
+                <p className="text-primary font-black mt-1">
+                  {formatoMoneda(prod.precio_por_kilo)} / kg
+                </p>
+                <span className={`text-xs mt-2 px-2 py-1 rounded-full font-bold ${
+                  prod.stock_actual_kilos > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  Stock: {prod.stock_actual_kilos} Kg
+                </span>
+              </button>
+            ))}
           </div>
-          
-          {cargando ? (
-            <p className="text-gray-500">Cargando historial...</p>
+        )}
+      </div>
+
+      {/* PANEL DERECHO: Carrito y Facturación (30%) */}
+      <div className="lg:w-1/3 bg-white shadow-2xl z-10 flex flex-col h-screen border-l border-gray-200">
+        <div className="bg-primary text-white p-4 font-bold text-xl flex items-center justify-between shadow-md">
+          <span>🛒 Caja</span>
+          <span className="bg-white text-primary px-3 py-1 rounded-full text-sm">
+            {carrito.length} Ítems
+          </span>
+        </div>
+
+        {/* Lista de Productos Seleccionados */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          {carrito.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-400 italic">
+              Seleccione productos del catálogo
+            </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-gray-600 text-sm uppercase">
-                  <th className="p-3 rounded-tl-lg">Fecha</th>
-                  <th className="p-3">Producto</th>
-                  <th className="p-3">Kilos</th>
-                  <th className="p-3">Total Venta</th>
-                  <th className="p-3 rounded-tr-lg">Vendedor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ventas.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="p-4 text-center text-gray-500">
-                      Aún no hay ventas registradas.
-                    </td>
-                  </tr>
-                ) : (
-                  ventas.map((venta) => (
-                    <tr key={venta.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                      <td className="p-3 text-sm text-gray-600">
-                        {new Date(venta.fecha_venta).toLocaleDateString('es-CO')}
-                      </td>
-                      <td className="p-3 font-medium text-gray-800">{venta.Producto?.nombre}</td>
-                      {/* RESTAURADO: formatearKilos en la tabla visual */}
-                      <td className="p-3 text-red-500 font-bold">-{formatearKilos(venta.cantidad_kilos)} Kg</td>
-                      <td className="p-3 text-green-700 font-black">{formatoMoneda(venta.total_venta)}</td>
-                      <td className="p-3 text-sm text-gray-500">{venta.Usuario?.nombre}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <div className="space-y-3">
+              {carrito.map(item => (
+                <div key={item.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-bold text-gray-800">{item.nombre}</span>
+                    <button 
+                      onClick={() => eliminarDelCarrito(item.id)}
+                      className="text-red-500 hover:bg-red-50 p-1 rounded transition"
+                      title="Eliminar"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number"
+                      placeholder="0.000"
+                      value={item.cantidad_kilos}
+                      onChange={(e) => actualizarCantidad(item.id, e.target.value)}
+                      className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-primary focus:border-primary outline-none"
+                    />
+                    <span className="text-sm text-gray-500">kg</span>
+                    <span className="ml-auto font-black text-green-700">
+                      {formatoMoneda(item.subtotal)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Totales y Cobro */}
+        <div className="p-6 bg-white border-t-2 border-dashed border-gray-300">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xl font-bold text-gray-600">TOTAL:</span>
+            <span className="text-3xl font-black text-gray-900">{formatoMoneda(totalFactura)}</span>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-bold text-gray-700 mb-1">Paga con ($):</label>
+            <input 
+              type="number"
+              placeholder="Efectivo recibido"
+              value={pagoCliente}
+              onChange={(e) => setPagoCliente(e.target.value)}
+              className="w-full px-4 py-3 text-lg font-bold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+            />
+          </div>
+
+          <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg mb-6">
+            <span className="text-lg font-bold text-gray-600">CAMBIO:</span>
+            <span className={`text-2xl font-black ${cambio >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+              {pagoCliente ? formatoMoneda(cambio) : '$0'}
+            </span>
+          </div>
+
+          <Button 
+            onClick={handleFinalizarVenta} 
+            cargando={procesando}
+          >
+            Finalizar Venta
+          </Button>
+        </div>
       </div>
+
     </div>
   );
 }
