@@ -26,11 +26,13 @@ const authRoutes = require('./routes/authRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const entradaRoutes = require('./routes/entradaRoutes');
 const salidaRoutes = require('./routes/salidaRoutes');
+const cajaRoutes = require('./routes/cajaRoutes');
 
 app.use('/api/productos', productoRoutes);
 app.use('/api/auth', authRoutes); 
 app.use('/api/entradas', entradaRoutes);
 app.use('/api/salidas', salidaRoutes);
+app.use('/api/cajas', cajaRoutes);
 
 // --- Inicialización del Servidor ---
 const PORT = process.env.PORT || 3001;
