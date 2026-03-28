@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Entradas from './pages/Entradas';
 import Ventas from './pages/Ventas';
 import Usuarios from './pages/Usuarios';
+import ControlCaja from './pages/ControlCaja';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/entradas" element={<Entradas />} />
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/caja" element={<ControlCaja />} />
         </Route>
 
         {/* Si escriben cualquier otra ruta que no existe o la raíz, al login */}

@@ -162,7 +162,15 @@ export default function Dashboard() {
               </div>
               <span className="text-4xl transition-transform group-hover:scale-110">👥</span>
             </Link>
-          )}
+        )}
+        
+        <Link to="/caja" className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center justify-between group border-l-4 border-emerald-500">
+            <div>
+              <h3 className="font-bold text-xl text-gray-800 group-hover:text-emerald-500 transition-colors">Caja</h3>
+              <p className="text-gray-500 text-sm mt-1">Apertura, cierre y cuadres</p>
+            </div>
+            <span className="text-4xl transition-transform group-hover:scale-110">🧾</span>
+          </Link>
 
 
       </main>
