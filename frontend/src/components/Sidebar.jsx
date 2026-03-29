@@ -74,7 +74,7 @@ export default function Sidebar() {
         </div>
         <button 
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-secondary hover:bg-red-800 text-white transition-all shadow-md active:scale-95"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-secondary hover:bg-red-800 text-black transition-all shadow-md active:scale-95"
         >
           <HiOutlineLogout className="text-xl" />
           Cerrar Turno
