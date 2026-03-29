@@ -1,4 +1,4 @@
-const { Salida, Producto, Usuario } = require('../models');
+const { Salida, Producto, Usuario, Caja } = require('../models');
 const { sequelize } = require('../config/db');
 
 // 1. Registrar una nueva salida (Venta)
@@ -7,7 +7,13 @@ const registrarSalida = async (req, res) => {
 
   try {
     const { producto_id, cantidad_kilos } = req.body;
-    const usuario_id = req.usuario.id; // Obtenemos el empleado del token
+    const usuario_id = req.usuario.id; 
+
+    const cajaAbierta = await Caja.findOne({ where: { estado: 'ABIERTA' }, transaction: t });
+    if (!cajaAbierta) {
+      await t.rollback();
+      return res.status(403).json({ mensaje: 'ACCESO DENEGADO: Debes abrir la caja antes de registrar ventas.' });
+    }
 
     // 1. Buscamos el producto
     const producto = await Producto.findByPk(producto_id, { transaction: t });
@@ -27,7 +33,7 @@ const registrarSalida = async (req, res) => {
       });
     }
 
-    // 3. Calculamos el total a cobrar de forma segura en el servidor
+    // 3. Calcula el total a cobrar de forma segura en el servidor
     const precioPorKilo = parseFloat(producto.precio_por_kilo);
     const total_venta = kilosVenta * precioPorKilo;
 

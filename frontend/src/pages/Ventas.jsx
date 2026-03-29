@@ -1,32 +1,53 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { registrarSalida } from '../services/salidaService';
 import { obtenerProductos } from '../services/productoService';
+import { obtenerEstadoCaja } from '../services/cajaService';
 import Button from '../components/Button';
+
+// --- FUNCIÓN DE FORMATEO ---
+const formatearKilos = (valor) => {
+  if (valor == null) return '0';
+  return parseFloat(valor).toString();
+};
 
 export default function Ventas() {
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [pagoCliente, setPagoCliente] = useState('');
-  
   const [cargando, setCargando] = useState(true);
+  
+  // --- NUEVOS ESTADOS ---
+  const [cajaAbierta, setCajaAbierta] = useState(false);
+  const [verificando, setVerificando] = useState(true);
+  
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
 
-  // Cargar catálogo al iniciar
+  // Modificamos el useEffect para que revise la caja primero
   useEffect(() => {
-    cargarCatalogo();
+    verificarEstadoYCargar();
   }, []);
 
-  const cargarCatalogo = async () => {
+  const verificarEstadoYCargar = async () => {
     try {
-      const data = await obtenerProductos();
-      setProductos(data);
+      const estadoCaja = await obtenerEstadoCaja();
+      
+      if (estadoCaja && estadoCaja.estado === 'ABIERTA') {
+        setCajaAbierta(true);
+        // Solo cargamos el catálogo si la caja está abierta
+        const data = await obtenerProductos();
+        setProductos(data);
+      } else {
+        setCajaAbierta(false);
+      }
     } catch (err) {
-      setError('Error al cargar el catálogo.');
+      setError('Error al conectar con el servidor.');
       console.error(err);
     } finally {
-      setCargando(false);
+      setVerificando(false);
+      setCargando(false); 
     }
   };
 
@@ -109,7 +130,7 @@ export default function Ventas() {
       setExito('Venta registrada y stock descontado con éxito.');
       setCarrito([]);
       setPagoCliente('');
-      await cargarCatalogo(); // Actualizamos el stock en los botones
+      await verificarEstadoYCargar(); // SOLUCIÓN 2: Usamos el nombre correcto de la función
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Error al procesar la venta. Verifica el stock.');
     } finally {
@@ -117,6 +138,31 @@ export default function Ventas() {
       setTimeout(() => setExito(''), 4000);
     }
   };
+
+  // --- INTERFAZ DE BLOQUEO ---
+  if (verificando) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-100 font-bold text-gray-500">Verificando estado de caja...</div>;
+  }
+
+  if (!cajaAbierta) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 p-6">
+        <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg border-t-8 border-red-500">
+          <span className="text-7xl block mb-6 animate-bounce">🔒</span>
+          <h2 className="text-3xl font-black text-gray-800 mb-4">Caja Cerrada</h2>
+          <p className="text-gray-600 mb-8 text-lg">
+            Por motivos de seguridad y auditoría, no puedes acceder al Punto de Venta sin antes declarar la base de efectivo e iniciar tu turno operativo.
+          </p>
+          <Link 
+            to="/caja" 
+            className="inline-block bg-primary hover:bg-yellow-600 text-black font-extrabold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            Ir a Abrir Caja Ahora
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
@@ -156,7 +202,8 @@ export default function Ventas() {
                 <span className={`text-xs mt-2 px-2 py-1 rounded-full font-bold ${
                   prod.stock_actual_kilos > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 }`}>
-                  Stock: {prod.stock_actual_kilos} Kg
+                  {/* SOLUCIÓN 3: Limpieza de kilos aplicada */}
+                  Stock: {formatearKilos(prod.stock_actual_kilos)} Kg
                 </span>
               </button>
             ))}
@@ -196,6 +243,7 @@ export default function Ventas() {
                   <div className="flex items-center gap-2">
                     <input 
                       type="number"
+                      step="any" // Agregado por seguridad para soportar decimales
                       placeholder="0.000"
                       value={item.cantidad_kilos}
                       onChange={(e) => actualizarCantidad(item.id, e.target.value)}
