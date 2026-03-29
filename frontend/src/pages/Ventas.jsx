@@ -133,7 +133,7 @@ export default function Ventas() {
           <span className="text-7xl block mb-6 animate-bounce">🔒</span>
           <h2 className="text-3xl font-black text-gray-800 mb-4">Caja Cerrada</h2>
           <p className="text-gray-600 mb-8 text-lg">Por motivos de seguridad, no puedes acceder al Punto de Venta sin iniciar tu turno operativo.</p>
-          <Link to="/caja" className="inline-block bg-primary hover:bg-yellow-600 text-white font-extrabold py-4 px-8 rounded-xl transition-all shadow-lg transform hover:-translate-y-1">
+          <Link to="/caja" className="inline-block bg-primary hover:bg-yellow-600 text-black font-extrabold py-4 px-8 rounded-xl transition-all shadow-lg transform hover:-translate-y-1">
             Ir a Abrir Caja Ahora
           </Link>
         </div>
